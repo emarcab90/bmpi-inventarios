@@ -875,20 +875,64 @@ async function mostrarSetup() {
   setup.style.flexDirection = 'column';
   setup.style.minHeight = '100dvh';
 
-  // Poblar centrales
-  const { data: cents } = await db.from('centrales').select('*').order('nombre');
-  G.centrales = cents || [];
+  // Poblar centrales — fallback hardcodeado por si RLS bloquea antes de tener perfil
+  const CENTRALES_FIJAS = [
+    { id: null, nombre: 'Cd. del Carmen',  codigo: 'CARMEN'   },
+    { id: null, nombre: 'Paraíso',          codigo: 'PARAISO'  },
+    { id: null, nombre: 'Coatzacoalcos',    codigo: 'COATZA'   },
+    { id: null, nombre: 'Veracruz',         codigo: 'VERACRUZ' },
+    { id: null, nombre: 'Poza Rica',        codigo: 'POZARICA' },
+    { id: null, nombre: 'Reynosa',          codigo: 'REYNOSA'  },
+  ];
+
+  const { data: cents, error: cErr } = await db.from('centrales').select('*').order('nombre');
+  if (cErr) console.warn('centrales RLS error:', cErr.message);
+
+  if (cents && cents.length > 0) {
+    G.centrales = cents;
+  } else {
+    // Usar fallback — intentar obtener IDs reales con fetch directo
+    console.warn('Usando centrales hardcodeadas como fallback');
+    // Segundo intento con REST directo (sin RLS headers)
+    try {
+      const res = await fetch(`${SUPA_URL}/rest/v1/centrales?select=*&order=nombre`, {
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': `Bearer ${SUPA_KEY}`,
+          'Accept': 'application/json'
+        }
+      });
+      const data2 = await res.json();
+      G.centrales = Array.isArray(data2) && data2.length > 0 ? data2 : CENTRALES_FIJAS;
+    } catch(e) {
+      G.centrales = CENTRALES_FIJAS;
+    }
+  }
+
   const sel = document.getElementById('sp-central');
   sel.innerHTML = '<option value="">Seleccionar central…</option>' +
-    G.centrales.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+    G.centrales.map(c => `<option value="${c.id || c.codigo}">${c.nombre}</option>`).join('');
 }
 
 async function guardarPerfil() {
   const nombre  = document.getElementById('sp-nombre').value.trim();
   const rol     = document.getElementById('sp-rol').value;
-  const central = document.getElementById('sp-central').value;
+  let   central = document.getElementById('sp-central').value;
   const err     = document.getElementById('sp-err');
   if (!nombre || !rol || !central) { err.textContent = 'Completa todos los campos.'; return; }
+
+  // Si el valor parece un código (no UUID), buscar el ID real
+  if (central && !central.includes('-')) {
+    const found = G.centrales.find(c => c.codigo === central || c.id === central);
+    if (found && found.id && found.id !== null) {
+      central = found.id;
+    } else {
+      // Buscar en BD por código
+      const { data: cRow } = await db.from('centrales').select('id').eq('codigo', central).single();
+      if (cRow) central = cRow.id;
+      else { err.textContent = 'No se pudo resolver la central. Intenta de nuevo.'; return; }
+    }
+  }
 
   const { error } = await db.from('perfiles').insert({
     id: G.user.id,
