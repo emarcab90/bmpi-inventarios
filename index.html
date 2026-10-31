@@ -855,15 +855,25 @@ async function doLogout() {
 }
 
 async function cargarPerfil() {
-  const { data } = await db.from('perfiles')
+  const { data, error } = await db.from('perfiles')
     .select('*, central:centrales(nombre,codigo)')
     .eq('id', G.user.id).single();
+  if (error) console.warn('cargarPerfil error:', error.message);
   G.perfil = data;
 
   const { data: cats } = await db.from('categorias').select('*').order('nombre');
   G.categorias = cats || [];
+
+  // Centrales con fallback hardcodeado
   const { data: cents } = await db.from('centrales').select('*').order('nombre');
-  G.centrales = cents || [];
+  G.centrales = (cents && cents.length > 0) ? cents : [
+    { id: 'a448de83-1afc-4543-b776-7d825869ee0e', nombre: 'Cd. del Carmen',  codigo: 'CARMEN'   },
+    { id: '1ff5756b-bd79-47c4-bb4c-6a1a8ed52bf1', nombre: 'Coatzacoalcos',   codigo: 'COATZA'   },
+    { id: 'c0f029bf-1009-42b6-92ec-c84c9971a724', nombre: 'Paraíso',          codigo: 'PARAISO'  },
+    { id: '43b936fc-74e9-4220-a5d1-ab405b1036e5', nombre: 'Poza Rica',        codigo: 'POZARICA' },
+    { id: '691a9bf8-d875-4de2-8959-1a818b36e11c', nombre: 'Reynosa',          codigo: 'REYNOSA'  },
+    { id: 'd630968e-a413-4529-831b-7e814a662f3b', nombre: 'Veracruz',         codigo: 'VERACRUZ' },
+  ];
 }
 
 async function mostrarSetup() {
@@ -885,33 +895,12 @@ async function mostrarSetup() {
     { id: 'd630968e-a413-4529-831b-7e814a662f3b', nombre: 'Veracruz',         codigo: 'VERACRUZ' },
   ];
 
-  const { data: cents, error: cErr } = await db.from('centrales').select('*').order('nombre');
-  if (cErr) console.warn('centrales RLS error:', cErr.message);
-
-  if (cents && cents.length > 0) {
-    G.centrales = cents;
-  } else {
-    // Usar fallback — intentar obtener IDs reales con fetch directo
-    console.warn('Usando centrales hardcodeadas como fallback');
-    // Segundo intento con REST directo (sin RLS headers)
-    try {
-      const res = await fetch(`${SUPA_URL}/rest/v1/centrales?select=*&order=nombre`, {
-        headers: {
-          'apikey': SUPA_KEY,
-          'Authorization': `Bearer ${SUPA_KEY}`,
-          'Accept': 'application/json'
-        }
-      });
-      const data2 = await res.json();
-      G.centrales = Array.isArray(data2) && data2.length > 0 ? data2 : CENTRALES_FIJAS;
-    } catch(e) {
-      G.centrales = CENTRALES_FIJAS;
-    }
-  }
+  // Usar UUIDs reales hardcodeados — evita depender de RLS en setup
+  G.centrales = CENTRALES_FIJAS;
 
   const sel = document.getElementById('sp-central');
   sel.innerHTML = '<option value="">Seleccionar central…</option>' +
-    G.centrales.map(c => `<option value="${c.id || c.codigo}">${c.nombre}</option>`).join('');
+    G.centrales.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
 }
 
 async function guardarPerfil() {
