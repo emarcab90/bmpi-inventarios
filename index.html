@@ -921,16 +921,25 @@ async function guardarPerfil() {
   const err     = document.getElementById('sp-err');
   if (!nombre || !rol || !central) { err.textContent = 'Completa todos los campos.'; return; }
 
-  // Si el valor parece un código (no UUID), buscar el ID real
-  if (central && !central.includes('-')) {
-    const found = G.centrales.find(c => c.codigo === central || c.id === central);
-    if (found && found.id && found.id !== null) {
-      central = found.id;
+  // Si el valor no es UUID (es código como CARMEN), buscar ID en G.centrales o en BD
+  const esUUID = /^[0-9a-f-]{36}$/.test(central);
+  if (!esUUID) {
+    // Buscar en la caché local primero
+    const encontrada = G.centrales.find(c => c.codigo === central);
+    if (encontrada && /^[0-9a-f-]{36}$/.test(encontrada.id || '')) {
+      central = encontrada.id;
     } else {
-      // Buscar en BD por código
-      const { data: cRow } = await db.from('centrales').select('id').eq('codigo', central).single();
-      if (cRow) central = cRow.id;
-      else { err.textContent = 'No se pudo resolver la central. Intenta de nuevo.'; return; }
+      // Consulta directa con anon key (sin RLS de perfiles)
+      try {
+        const res = await fetch(`${SUPA_URL}/rest/v1/centrales?codigo=eq.${central}&select=id`, {
+          headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Accept': 'application/json' }
+        });
+        const rows = await res.json();
+        if (rows && rows[0]?.id) central = rows[0].id;
+        else { err.textContent = 'No se encontró la central en la base de datos.'; return; }
+      } catch(e) {
+        err.textContent = 'Error de conexión al resolver central.'; return;
+      }
     }
   }
 
