@@ -875,14 +875,14 @@ async function mostrarSetup() {
   setup.style.flexDirection = 'column';
   setup.style.minHeight = '100dvh';
 
-  // Poblar centrales — fallback hardcodeado por si RLS bloquea antes de tener perfil
+  // Poblar centrales — fallback hardcodeado con UUIDs reales de Supabase
   const CENTRALES_FIJAS = [
-    { id: null, nombre: 'Cd. del Carmen',  codigo: 'CARMEN'   },
-    { id: null, nombre: 'Paraíso',          codigo: 'PARAISO'  },
-    { id: null, nombre: 'Coatzacoalcos',    codigo: 'COATZA'   },
-    { id: null, nombre: 'Veracruz',         codigo: 'VERACRUZ' },
-    { id: null, nombre: 'Poza Rica',        codigo: 'POZARICA' },
-    { id: null, nombre: 'Reynosa',          codigo: 'REYNOSA'  },
+    { id: 'a448de83-1afc-4543-b776-7d825869ee0e', nombre: 'Cd. del Carmen',  codigo: 'CARMEN'   },
+    { id: '1ff5756b-bd79-47c4-bb4c-6a1a8ed52bf1', nombre: 'Coatzacoalcos',   codigo: 'COATZA'   },
+    { id: 'c0f029bf-1009-42b6-92ec-c84c9971a724', nombre: 'Paraíso',          codigo: 'PARAISO'  },
+    { id: '43b936fc-74e9-4220-a5d1-ab405b1036e5', nombre: 'Poza Rica',        codigo: 'POZARICA' },
+    { id: '691a9bf8-d875-4de2-8959-1a818b36e11c', nombre: 'Reynosa',          codigo: 'REYNOSA'  },
+    { id: 'd630968e-a413-4529-831b-7e814a662f3b', nombre: 'Veracruz',         codigo: 'VERACRUZ' },
   ];
 
   const { data: cents, error: cErr } = await db.from('centrales').select('*').order('nombre');
