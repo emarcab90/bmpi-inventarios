@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=360,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="theme-color" content="#0E0E0C"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -36,10 +36,9 @@
 /* ── BASE ────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html {
-  font-size: 20px;
+  font-size: 4.5vw;
   -webkit-text-size-adjust: none;
   text-size-adjust: none;
-  zoom: 1;
 }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -547,6 +546,11 @@ textarea.form-control { resize: vertical; min-height: 72px; }
     </div>
     <div id="login-err" class="login-err"></div>
     <button class="btn-primary" id="btn-login" onclick="doLogin()">Iniciar sesión</button>
+    <div style="margin-top:16px;text-align:center;border-top:1px solid var(--border);padding-top:14px;">
+      <div style="font-size:11px;color:var(--text-hint);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Soporte técnico</div>
+      <div style="font-size:13px;color:var(--text-dim);font-weight:600;">Héctor Eduardo Martínez Cabrera</div>
+      <a href="tel:9333293930" style="font-size:13px;color:var(--gold);text-decoration:none;font-family:var(--mono);">933 329 3930</a>
+    </div>
   </div>
 </div>
 
